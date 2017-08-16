@@ -15,7 +15,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class Interpretation {
-	File f = new File("/Users/lazypanda/Documents/workspace/NewClassScheduler/Data.xlsx");
+	File f = new File(System.getProperty("user.home") + "/Desktop/Data.xlsx");
 	Data dL = new Data(f);
 	ArrayList<List> sheet;
 	public Interpretation(){
@@ -147,4 +147,16 @@ public class Interpretation {
 		file.close();
 	}
 	
+	public String getFilePath(){
+		String filePath = "";
+		try{
+		    File temp = File.createTempFile("tempFile", ".tmp" );
+		    String absolutePath = temp.getAbsolutePath();
+		    filePath = absolutePath.substring(0,absolutePath.lastIndexOf(File.separator));
+		}catch(IOException e){
+		    e.printStackTrace();
+		}
+		return filePath;
+	
+	}
 }

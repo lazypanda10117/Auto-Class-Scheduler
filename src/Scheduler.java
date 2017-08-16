@@ -3,13 +3,17 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Scheduler {
+	public static final double studentWeight = 0.2;
+	public static final double scheduleWeight = 0.8;
+
 	public static void main(String[] args) throws IOException{
 		final int generationPopulation = 100;
 		final double mutationRate = 0.02;
 		final double crossoverRate = 0.9;
 		final int elitismCount = 2; //how many of the top individual in one generation's population should be passed on to next generation of evolution.
 		final int tournmentSize = 5;
-		final int roundsOfEvolution = 100;
+		final int roundsOfEvolution = 200;
+		final int printDistance = 1;
 		
 		Interpretation in = new Interpretation();
 		Schedule schedule = initializeSchedule();
@@ -36,7 +40,7 @@ public class Scheduler {
 			in.writeDouToSheet(6, generation, 3, dA[1]);
 			in.writeIntToSheet(6, generation, 4, (int)dA[2]);
 			in.writeIntToSheet(6, generation, 5, (int)dA[3]);
-			if(generation%10 == 1){
+			if((generation-1)%printDistance == 0){
 				System.out.println("Generation: " + generation + " Best Fitness: " + fitness);
 			}
 			generation++;

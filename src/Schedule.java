@@ -3,8 +3,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Schedule {
-	private final double studentWeight = 0.2;
-	private final double scheduleWeight = 0.8;
+	private final double studentWeight = Scheduler.studentWeight;
+	private final double scheduleWeight = Scheduler.scheduleWeight;
 	
 	private final HashMap<Integer, Room> rooms;
     private final HashMap<Integer, Teacher> teachers;
