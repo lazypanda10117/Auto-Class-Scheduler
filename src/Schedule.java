@@ -3,6 +3,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Schedule {
+	private final double studentWeight = 0.2;
+	private final double scheduleWeight = 0.8;
+	
 	private final HashMap<Integer, Room> rooms;
     private final HashMap<Integer, Teacher> teachers;
     private final HashMap<Integer, Module> modules;
@@ -13,8 +16,6 @@ public class Schedule {
     private int numClasses = 0;
     private int[] moduleArray;
 	private double studentScore = 0;
-	private final double studentWeight = 0.2;
-	private final double scheduleWeight = 0.8;
 	
 	private int clashes = 0;
 	private double scheduleScore = 0;
@@ -168,6 +169,14 @@ public class Schedule {
     	return studentClashes;
     }
     
+    public double[] getScores() throws IOException{
+    	double[] dA = new double[4];
+    	dA[0] = scheduleScore;
+    	dA[1] = studentScore;
+    	dA[2] = clashes;
+    	dA[3] = studentClashes;
+    	return dA;
+    }
     
     public void createClasses(Individual individual) {
     	classes = new Class[this.getNumClasses()];
@@ -186,69 +195,20 @@ public class Schedule {
 		}
     }
     
+
     
     public double calculateScheduleScore() throws IOException{
-		studentSuccess = 0;
-    	studentClashes = 0;
-		studentScore = 0;
-		clashes = 0;
-		scheduleScore = 0;
-    	for (Class classA : this.classes) {
-    		for (Class classB : this.classes) {
-                if (classA.getRoomId() == classB.getRoomId() && classA.getBlockId() == classB.getBlockId() && classA.getClassId() != classB.getClassId()){
-                	clashes++;
-                    break; 
-                }
-            }
-	    	for (Class classB : this.classes) {
-	    		if (classA.getTeacherId() == classB.getTeacherId() && classA.getBlockId() ==classB.getBlockId() && classA.getClassId() != classB.getClassId()) {
-	    	       clashes++;
-	    	       break;
-	    		}
-	    	}
-	    	if(modules.get(classA.getModuleId()).getIsLab()){
-	    		if(!rooms.get(classA.getRoomId()).getIsLab()){
-	    			clashes++;
-	    		}
-	    	}
-    	}
-    	Object[] sA = students.values().toArray();
-    	for(Object s: sA){
-    		int n = ((Student)s).numberFit(classes);
-			if(n == 7){
-    			studentSuccess++;
-    		}else{
-    			studentClashes++;
-    		}
-    	}
-    	scheduleScore = 100.0-(Math.pow(1.8, clashes));
-    	if(scheduleScore<0){
-    		scheduleScore = 0;
-    	}else if (scheduleScore == 99){
-    		scheduleScore += 1;
-    	}
-    	studentScore = (studentSuccess/(double)(studentSuccess+studentClashes))*100; //mapping to 100%
-   
-    	double fitness = scheduleScore*scheduleWeight+studentScore*studentWeight;
-    	return fitness;
-    }
-    
-    public double[] getScores() throws IOException{
-    	double[] dA = new double[4];
-    	dA[0] = scheduleScore;
-    	dA[1] = studentScore;
-    	dA[2] = clashes;
-    	dA[3] = studentClashes;
-    	return dA;
+		scoreClear();
+		clashes = checkScheduleClashes(this.classes, modules, rooms);
+		int[] tempA = checkStudentClashes(students, classes);
+		studentSuccess = tempA[0];
+		studentClashes = tempA[1];
+    	scheduleScore = scheduleScoreCalc(clashes);
+    	studentScore = studentScoreCalc(studentSuccess, studentClashes);
+    	return fitnessCalc(scheduleScore, studentScore);
     }
     
 	public double calculateFScheduleScore(int gen) throws IOException{
-		Interpretation in = new Interpretation();
-		studentSuccess = 0;
-		studentClashes = 0;
-		studentScore = 0;
-		clashes = 0;
-		scheduleScore = 0;
 		System.out.println();
 		System.out.println();
 		System.out.println("----------------------------- Class Schedule Evolution Process Finished --------------------------------");
@@ -257,25 +217,10 @@ public class Schedule {
 		System.out.println("----------------------------- Students' Schedules --------------------------------");
 		System.out.println();
 
-		for (Class classA : this.classes) {
-			for (Class classB : this.classes) {
-	            if (classA.getRoomId() == classB.getRoomId() && classA.getBlockId() == classB.getBlockId() && classA.getClassId() != classB.getClassId()){
-	            	clashes++;
-	                break; 
-	            }
-	        }
-	    	for (Class classB : this.classes) {
-	    		if (classA.getTeacherId() == classB.getTeacherId() && classA.getBlockId() ==classB.getBlockId() && classA.getClassId() != classB.getClassId()) {
-	    	       clashes++;
-	    	       break;
-	    		}
-	    	}
-	    	if(modules.get(classA.getModuleId()).getIsLab()){
-	    		if(!rooms.get(classA.getRoomId()).getIsLab()){
-	    			clashes++;
-	    		}
-	    	}
-		}
+		scoreClear();
+		Interpretation in = new Interpretation();
+		clashes = checkScheduleClashes(this.classes, modules, rooms);
+
 		Object[] sA = students.values().toArray();
 		int stdCounter = 1;
 		for(Object s: sA){
@@ -311,33 +256,95 @@ public class Schedule {
 			stdCounter++;
 			System.out.println();
 		}
-    	scheduleScore = 100.0-(Math.pow(1.8, clashes));
-    	if(scheduleScore<0){
-    		scheduleScore = 0;
-    	}else if (scheduleScore == 99){
-    		scheduleScore += 1;
-    	}
+		scheduleScore = scheduleScoreCalc(clashes);
+    	studentScore = studentScoreCalc(studentSuccess, studentClashes);
+    	
 		System.out.println();
 		System.out.println();
 		System.out.println("----------------------------- Final Evaluation --------------------------------");
 		System.out.println();
 		System.out.println();
-    	studentScore = (studentSuccess/(double)(studentSuccess+studentClashes))*100; //mapping to 100%
-		double fitness = scheduleScore*scheduleWeight+studentScore*studentWeight;
-
     	System.out.println("Schedule clashes: " + clashes);
 		System.out.println("Student clashes: " + studentClashes);
 		System.out.println("Schedule score: " + scheduleScore);
 		System.out.println("Student score: " + studentScore);
-		System.out.println("Actual Score: " + fitness);		
+		System.out.println("Actual Score: " + fitnessCalc(scheduleScore, studentScore));		
 		System.out.println();
 		System.out.println();
 		System.out.println("----------------------------- All Classes Schedules --------------------------------");
 		System.out.println();
 		System.out.println();
-		return fitness;
-
+		
+		return fitnessCalc(scheduleScore, studentScore);
 	}
-
+	
+	public void scoreClear(){
+		studentSuccess = 0;
+    	studentClashes = 0;
+		studentScore = 0;
+		clashes = 0;
+		scheduleScore = 0;
+    }
+    
+    public double scheduleScoreCalc(int clashes){
+    	double sc = 100.0-(Math.pow(1.8, clashes));
+    	if(sc<0){
+    		sc = 0;
+    	}else if (sc == 99){
+    		sc += 1;
+    	}
+    	return sc;
+    }
+    
+    public double studentScoreCalc(int ss, int sc){
+    	double score = (ss/(double)(ss+sc))*100;
+    	return score;
+    }
+    
+    public double fitnessCalc(double sc, double stc){
+    	double fitness = sc*scheduleWeight+stc*studentWeight;
+    	return fitness;
+    }
+    
+    public int checkScheduleClashes(Class[] dummyClass, HashMap<Integer,Module> mods, HashMap<Integer,Room> rms){
+    	int cl = 0;
+    	for (Class classA : dummyClass) {
+    		for (Class classB : dummyClass) {
+                if (classA.getRoomId() == classB.getRoomId() && classA.getBlockId() == classB.getBlockId() && classA.getClassId() != classB.getClassId()){
+                	cl++;
+                    break; 
+                }
+            }
+	    	for (Class classB : dummyClass) {
+	    		if (classA.getTeacherId() == classB.getTeacherId() && classA.getBlockId() ==classB.getBlockId() && classA.getClassId() != classB.getClassId()) {
+	    	       cl++;
+	    	       break;
+	    		}
+	    	}
+	    	if(mods.get(classA.getModuleId()).getIsLab()){
+	    		if(!rms.get(classA.getRoomId()).getIsLab()){
+	    			cl++;
+	    		}
+	    	}
+    	}
+    	return cl;
+    }
+    
+    public int[] checkStudentClashes(HashMap<Integer,Student> stuHM, Class[] classArray){
+    	int[] sCA = new int[2];
+    	sCA[0] = 0;
+    	sCA[1] =0;
+    	Object[] sA = stuHM.values().toArray();
+    	for(Object s: sA){
+    		int n = ((Student)s).numberFit(classArray);
+			if(n == 7){
+				sCA[0]++;
+    		}else{
+    			sCA[1]++;
+    		}
+    	}
+    	return sCA;
+    }
+	
 }
 

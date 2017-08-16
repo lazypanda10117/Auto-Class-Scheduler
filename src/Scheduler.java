@@ -4,12 +4,19 @@ import java.util.List;
 
 public class Scheduler {
 	public static void main(String[] args) throws IOException{
+		final int generationPopulation = 100;
+		final double mutationRate = 0.02;
+		final double crossoverRate = 0.9;
+		final int elitismCount = 2; //how many of the top individual in one generation's population should be passed on to next generation of evolution.
+		final int tournmentSize = 5;
+		final int roundsOfEvolution = 100;
+		
 		Interpretation in = new Interpretation();
 		Schedule schedule = initializeSchedule();
-		GA ga = new GA(100,0.02, 0.9, 2, 5);//100,0.01,0.9,2,5
+		GA ga = new GA(generationPopulation, mutationRate, crossoverRate, elitismCount, tournmentSize);//100,0.01,0.9,2,5
 		int generation = 1;
 		Population population = ga.initPopulation(schedule);
-		while (!ga.isTerminationConditionMet(generation, 100) && !ga.isTerminationConditionMet(population)){
+		while (!ga.isTerminationConditionMet(generation, roundsOfEvolution) && !ga.isTerminationConditionMet(population)){
 			//crossover
 			population = ga.crossoverPopulation(population);
 			//mutate
@@ -22,15 +29,16 @@ public class Scheduler {
 			double fitness = population.getFittest(0).getFitness();
 
 			double[] dA = sche.getScores();
-
+			//if you want, you can write all the details of this generation's best schedule to excel by extracting the data in "sche"
 			in.writeIntToSheet(6, generation, 0, generation);
 			in.writeDouToSheet(6, generation, 1, fitness);
 			in.writeDouToSheet(6, generation, 2, dA[0]);
 			in.writeDouToSheet(6, generation, 3, dA[1]);
 			in.writeIntToSheet(6, generation, 4, (int)dA[2]);
 			in.writeIntToSheet(6, generation, 5, (int)dA[3]);
-			
-			System.out.println("Generation: " + generation + " Best Fitness: " + fitness);
+			if(generation%10 == 1){
+				System.out.println("Generation: " + generation + " Best Fitness: " + fitness);
+			}
 			generation++;
 		}
 		//show final fitness and schedule
@@ -134,6 +142,7 @@ public class Scheduler {
 		int totalCombination = (m1.length)*(m2.length)*(m3.length)*(m4.length)*(m5.length)*(m6.length)*(m7.length);
 		String[][] totalS = new String[totalCombination][7];
 		int counter = 0;
+		boolean bl;
 		for(int i1=0; i1<m1.length; i1++){
 			for(int i2=0; i2<m2.length; i2++){
 				for(int i3=0; i3<m3.length; i3++){
@@ -141,6 +150,7 @@ public class Scheduler {
 						for(int i5=0; i5<m5.length; i5++){
 							for(int i6=0; i6<m6.length; i6++){
 								for(int i7=0; i7<m7.length; i7++){
+									bl = true;
 									totalS[counter][0] = m1[i1].trim();
 									totalS[counter][1] = m2[i2].trim();
 									totalS[counter][2] = m3[i3].trim();
@@ -148,7 +158,16 @@ public class Scheduler {
 									totalS[counter][4] = m5[i5].trim();
 									totalS[counter][5] = m6[i6].trim();
 									totalS[counter][6] = m7[i7].trim();
-									counter++;
+									for(int j=6; j<=0; j--){
+										if(containsInArray(totalS[counter],j,totalS[counter][j])){
+											bl = false;
+											break;
+										}
+										
+									}
+									if(bl){
+										counter++;										
+									}
 								}
 							}
 						}
@@ -156,6 +175,25 @@ public class Scheduler {
 				}
 			}
 		}
-		return totalS;
+		String[][] finalS =  new String[counter][7];
+		for(int i=0; i<counter;i++){
+			for(int j=0; j<7; j++){
+				finalS[i][j] = totalS[i][j];
+			}
+		}
+		return finalS;
+	}
+	
+	private static boolean containsInArray(String[] arr, int index, String x){
+		if(arr.length < index){
+			return false;
+		}else{
+			for(int i=0; i<index; i++){
+				if(arr[i].equals(x)){
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 }
