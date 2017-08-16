@@ -109,6 +109,7 @@ public class Scheduler {
 		//initialize students
 
 		for(int i=0; i<in.getStudentList().size()-1; i++){
+			//System.out.println(i);
 			String[][] tempSAA = create2DModuleArray(in.getStudent(i));
 			int[][] tempIAA = new int[tempSAA.length][tempSAA[0].length];
 			for(int k=0; k<tempSAA.length; k++){
@@ -146,7 +147,7 @@ public class Scheduler {
 		int totalCombination = (m1.length)*(m2.length)*(m3.length)*(m4.length)*(m5.length)*(m6.length)*(m7.length);
 		String[][] totalS = new String[totalCombination][7];
 		int counter = 0;
-		boolean bl;
+		boolean bl = true;
 		for(int i1=0; i1<m1.length; i1++){
 			for(int i2=0; i2<m2.length; i2++){
 				for(int i3=0; i3<m3.length; i3++){
@@ -162,9 +163,10 @@ public class Scheduler {
 									totalS[counter][4] = m5[i5].trim();
 									totalS[counter][5] = m6[i6].trim();
 									totalS[counter][6] = m7[i7].trim();
-									for(int j=6; j<=0; j--){
+									for(int j=0; j<7; j++){
 										if(containsInArray(totalS[counter],j,totalS[counter][j])){
 											bl = false;
+											//System.out.println("hi: "+j + totalS[counter][j]);
 											break;
 										}
 										
@@ -179,6 +181,7 @@ public class Scheduler {
 				}
 			}
 		}
+
 		String[][] finalS =  new String[counter][7];
 		for(int i=0; i<counter;i++){
 			for(int j=0; j<7; j++){
